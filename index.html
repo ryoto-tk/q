@@ -1,0 +1,1560 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>問診票 | Qrinic</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --teal: #0D9488;
+    --teal-light: #CCFBF1;
+    --teal-bg: #F0FDFA;
+    --navy: #0F172A;
+    --gray: #64748B;
+    --gray-light: #F1F5F9;
+    --border: #E2E8F0;
+    --white: #FFFFFF;
+    --danger: #EF4444;
+    --amber: #F59E0B;
+    --radius: 14px;
+    --radius-sm: 8px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body {
+    font-family: 'Noto Sans JP', sans-serif;
+    background: var(--gray-light);
+    color: var(--navy);
+    min-height: 100vh;
+    padding-bottom: 100px;
+  }
+
+  /* Header */
+  .header {
+    background: var(--white);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 20px;
+    position: sticky; top: 0; z-index: 50;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .header-logo {
+    width: 36px; height: 36px;
+    background: var(--teal);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .header-logo svg { width: 20px; height: 20px; fill: white; }
+  .header-info { flex: 1; }
+  .header-clinic { font-size: 13px; font-weight: 500; }
+  .header-form { font-size: 11px; color: var(--gray); margin-top: 1px; }
+  .header-step {
+    font-size: 11px;
+    color: var(--teal);
+    font-weight: 600;
+    background: var(--teal-light);
+    padding: 4px 10px;
+    border-radius: 20px;
+  }
+
+  /* Progress */
+  .progress-wrap { background: var(--white); padding: 0 20px 14px; border-bottom: 1px solid var(--border); }
+  .progress-bar { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+  .progress-fill { height: 100%; background: var(--teal); border-radius: 2px; transition: width 0.4s ease; }
+  .progress-label { display: flex; justify-content: space-between; font-size: 11px; color: var(--gray); margin-bottom: 6px; }
+
+  /* Screens */
+  .screen { display: none; padding: 20px; }
+  .screen.active { display: block; }
+
+  /* Welcome */
+  .welcome-card {
+    background: white; border-radius: var(--radius); padding: 28px 24px;
+    border: 1px solid var(--border); margin-bottom: 16px;
+    text-align: center;
+  }
+  .welcome-icon {
+    width: 64px; height: 64px;
+    background: var(--teal-bg);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 16px;
+    font-size: 28px;
+  }
+  .welcome-title { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+  .welcome-clinic { font-size: 13px; color: var(--teal); font-weight: 500; margin-bottom: 12px; }
+  .welcome-desc { font-size: 13px; color: var(--gray); line-height: 1.7; }
+
+  .info-card {
+    background: var(--teal-bg);
+    border: 1px solid #99F6E4;
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 16px;
+    font-size: 12px;
+    color: #0F766E;
+    line-height: 1.7;
+  }
+  .info-card strong { font-weight: 600; }
+
+  /* Patient info */
+  .section-card {
+    background: white;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+  .section-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--gray);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 16px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .section-title::before {
+    content: '';
+    width: 3px; height: 14px;
+    background: var(--teal);
+    border-radius: 2px;
+  }
+
+  /* Form inputs */
+  .field { margin-bottom: 18px; }
+  .field:last-child { margin-bottom: 0; }
+  .field-label {
+    font-size: 13px;
+    font-weight: 500;
+    margin-bottom: 8px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .required-badge {
+    font-size: 10px;
+    background: #FEE2E2;
+    color: var(--danger);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 500;
+  }
+  .optional-badge {
+    font-size: 10px;
+    background: var(--gray-light);
+    color: var(--gray);
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+
+  input[type="text"], input[type="date"], input[type="tel"], textarea, select {
+    width: 100%;
+    padding: 13px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-size: 15px;
+    font-family: 'Noto Sans JP', sans-serif;
+    background: white;
+    color: var(--navy);
+    outline: none;
+    transition: border-color 0.15s;
+    -webkit-appearance: none;
+  }
+  input:focus, textarea:focus, select:focus { border-color: var(--teal); }
+  input.error, textarea.error { border-color: var(--danger); }
+  textarea { resize: none; min-height: 100px; line-height: 1.6; }
+
+  /* Radio / Checkbox */
+  .choice-list { display: flex; flex-direction: column; gap: 8px; }
+  .choice-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 13px 16px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all 0.15s;
+    background: white;
+    font-size: 14px;
+  }
+  .choice-item:active { transform: scale(0.98); }
+  .choice-item.selected {
+    border-color: var(--teal);
+    background: var(--teal-bg);
+    color: var(--teal);
+    font-weight: 500;
+  }
+  .choice-icon {
+    width: 20px; height: 20px;
+    border: 2px solid var(--border);
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
+  }
+  .radio-icon { border-radius: 50%; }
+  .check-icon { border-radius: 4px; }
+  .choice-item.selected .choice-icon {
+    background: var(--teal);
+    border-color: var(--teal);
+    color: white;
+    font-size: 11px;
+  }
+
+  /* Yes/No */
+  .yesno-wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .yesno-btn {
+    padding: 16px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: white;
+    font-size: 16px;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: center;
+    color: var(--navy);
+  }
+  .yesno-btn:active { transform: scale(0.97); }
+  .yesno-btn.yes.selected { background: #ECFDF5; border-color: #10B981; color: #059669; }
+  .yesno-btn.no.selected { background: #FEF2F2; border-color: #EF4444; color: #DC2626; }
+
+  /* Scale */
+  .scale-wrap { padding: 8px 0; }
+  .scale-labels { display: flex; justify-content: space-between; font-size: 11px; color: var(--gray); margin-bottom: 8px; }
+  input[type="range"] {
+    width: 100%;
+    -webkit-appearance: none;
+    height: 6px;
+    border-radius: 3px;
+    background: var(--border);
+    outline: none;
+    padding: 0;
+    border: none;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: var(--teal);
+    cursor: pointer;
+    border: 3px solid white;
+    box-shadow: 0 2px 8px rgba(13,148,136,0.4);
+  }
+  .scale-value {
+    text-align: center;
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--teal);
+    margin-top: 12px;
+    font-variant-numeric: tabular-nums;
+  }
+  .scale-dots { display: flex; justify-content: space-between; margin-top: 8px; }
+  .scale-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--border); }
+
+  /* Question step */
+  .q-card {
+    background: white;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    padding: 24px 20px;
+    margin-bottom: 16px;
+  }
+  .q-number-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: var(--teal);
+    font-weight: 600;
+    background: var(--teal-light);
+    padding: 4px 10px;
+    border-radius: 20px;
+    margin-bottom: 12px;
+  }
+  .q-text {
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 1.5;
+    margin-bottom: 8px;
+  }
+  .q-hint { font-size: 12px; color: var(--gray); margin-bottom: 16px; line-height: 1.6; }
+
+  /* Error */
+  .error-msg {
+    font-size: 12px;
+    color: var(--danger);
+    margin-top: 6px;
+    display: none;
+  }
+  .error-msg.show { display: block; }
+
+  /* Buttons */
+  .btn-primary {
+    width: 100%;
+    padding: 16px;
+    background: var(--teal);
+    color: white;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: 16px;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-primary:active { transform: scale(0.98); background: #0F766E; }
+  .btn-primary:disabled { background: var(--gray); cursor: not-allowed; }
+
+  .btn-secondary {
+    width: 100%;
+    padding: 14px;
+    background: white;
+    color: var(--navy);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-size: 15px;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+    margin-top: 10px;
+  }
+  .btn-secondary:active { background: var(--gray-light); }
+
+  /* Bottom nav */
+  .bottom-nav {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: white;
+    border-top: 1px solid var(--border);
+    padding: 12px 20px;
+    padding-bottom: calc(12px + env(safe-area-inset-bottom));
+    display: flex; gap: 12px;
+    z-index: 100;
+  }
+  .bottom-back {
+    flex: 0 0 80px;
+    padding: 14px;
+    background: var(--gray-light);
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: 20px;
+    cursor: pointer;
+  }
+  .bottom-next {
+    flex: 1;
+    padding: 14px;
+    background: var(--teal);
+    color: white;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: 15px;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .bottom-next:active { background: #0F766E; }
+
+  /* Complete */
+  .complete-card {
+    background: white;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    padding: 40px 24px;
+    text-align: center;
+    margin-bottom: 16px;
+  }
+  .complete-icon {
+    width: 80px; height: 80px;
+    background: #ECFDF5;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 20px;
+    font-size: 40px;
+  }
+  .complete-title { font-size: 22px; font-weight: 700; margin-bottom: 10px; }
+  .complete-desc { font-size: 13px; color: var(--gray); line-height: 1.8; }
+  .complete-id {
+    display: inline-block;
+    margin-top: 16px;
+    font-size: 13px;
+    background: var(--teal-bg);
+    color: var(--teal);
+    padding: 8px 20px;
+    border-radius: 20px;
+    font-weight: 600;
+  }
+
+  /* Answer summary */
+  .summary-item {
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+    display: flex; flex-direction: column; gap: 4px;
+  }
+  .summary-item:last-child { border-bottom: none; }
+  .summary-q { font-size: 12px; color: var(--gray); }
+  .summary-a { font-size: 14px; font-weight: 500; color: var(--navy); }
+
+  /* ── 患者認識バナー ── */
+  .returning-banner {
+    background: linear-gradient(135deg, #ECFDF5, #F0FFF4);
+    border: 1.5px solid #10B981;
+    border-radius: var(--radius);
+    padding: 16px 18px;
+    margin-bottom: 16px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .returning-avatar {
+    width: 44px; height: 44px; border-radius: 50%;
+    background: #10B981; display: flex; align-items: center;
+    justify-content: center; font-size: 20px; font-weight: 700;
+    color: white; flex-shrink: 0;
+  }
+  .returning-info { flex: 1; }
+  .returning-name { font-size: 16px; font-weight: 700; color: #065F46; }
+  .returning-sub  { font-size: 12px; color: #059669; margin-top: 2px; }
+  .returning-change {
+    font-size: 12px; color: #059669; text-decoration: underline;
+    cursor: pointer; background: none; border: none; padding: 0;
+  }
+  /* 自動入力フィールドのハイライト */
+  input.autofilled {
+    background: #ECFDF5 !important;
+    border-color: #10B981 !important;
+    color: #065F46 !important;
+  }
+  /* ── AI深掘りカード ── */
+  .ai-followup-card {
+    background: linear-gradient(135deg, #EEF2FF, #F0F4FF);
+    border: 1.5px solid #6366F1;
+    border-radius: var(--radius);
+    padding: 18px;
+    margin-bottom: 12px;
+    animation: slideIn .35s ease;
+  }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .ai-tag {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 10px; font-weight: 700;
+    background: #6366F1; color: white;
+    padding: 3px 10px; border-radius: 20px;
+    margin-bottom: 10px; letter-spacing: .5px;
+  }
+  .ai-question { font-size: 15px; font-weight: 600; line-height: 1.5; margin-bottom: 12px; color: #3730A3; }
+  .ai-choices  { display: flex; flex-direction: column; gap: 8px; }
+  .ai-choice {
+    padding: 12px 16px;
+    border: 1.5px solid #C7D2FE;
+    border-radius: var(--radius-sm);
+    background: white; cursor: pointer;
+    font-size: 14px; font-family: 'Noto Sans JP', sans-serif;
+    color: #3730A3; transition: all .15s; text-align: left;
+  }
+  .ai-choice:active { transform: scale(.98); }
+  .ai-choice.selected { background: #6366F1; color: white; border-color: #6366F1; font-weight: 600; }
+  .ai-skip { font-size: 12px; color: #9CA3AF; text-decoration: underline; background: none; border: none; cursor: pointer; margin-top: 8px; }
+  /* ── AIローディング ── */
+  .ai-thinking {
+    display: flex; align-items: center; gap: 10px;
+    padding: 14px 18px;
+    background: #F5F3FF; border: 1px solid #DDD6FE;
+    border-radius: var(--radius); margin-bottom: 12px;
+    font-size: 13px; color: #6366F1;
+  }
+  .ai-dots span {
+    display: inline-block; width: 6px; height: 6px;
+    border-radius: 50%; background: #6366F1;
+    animation: dot .9s infinite; margin: 0 2px;
+  }
+  .ai-dots span:nth-child(2) { animation-delay: .2s; }
+  .ai-dots span:nth-child(3) { animation-delay: .4s; }
+  @keyframes dot { 0%,80%,100%{transform:scale(.6);opacity:.4} 40%{transform:scale(1);opacity:1} }
+
+  /* Loading */
+  .loading-overlay {  /* Loading */
+  /* followup screen のボトムナビと質問コンテナ */
+  #screen-followup .bottom-nav {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: white; border-top: 1px solid var(--border);
+    padding: 12px 20px; padding-bottom: calc(12px + env(safe-area-inset-bottom));
+    display: flex; gap: 12px; z-index: 100;
+  }
+  #ai-followup-container { padding-bottom: 80px; }
+
+  .loading-overlay {
+    position: fixed; inset: 0;
+    background: rgba(255,255,255,0.9);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    z-index: 200;
+    display: none;
+  }
+  .spinner {
+    width: 44px; height: 44px;
+    border: 3px solid var(--border);
+    border-top-color: var(--teal);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin-bottom: 16px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-text { font-size: 14px; color: var(--gray); }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-logo">
+    <svg viewBox="0 0 24 24"><path d="M19 8h-1V3H6v5H5c-1.66 0-3 1.34-3 3v6h4v4h12v-4h4v-6c0-1.66-1.34-3-3-3zM8 5h8v3H8V5zm8 12v2H8v-4h8v2zm2-2v-2H6v2H4v-4c0-.55.45-1 1-1h14c.55 0 1 .45 1 1v4h-2z"/></svg>
+  </div>
+  <div class="header-info">
+    <div class="header-clinic" id="hdr-clinic">さくら内科クリニック</div>
+    <div class="header-form" id="hdr-form">問診票を読み込み中...</div>
+  </div>
+  <div class="header-step" id="hdr-step" style="display:none"></div>
+</div>
+
+<!-- PROGRESS -->
+<div class="progress-wrap" id="progress-wrap" style="display:none">
+  <div class="progress-label">
+    <span id="prog-label">基本情報</span>
+    <span id="prog-pct">0%</span>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+</div>
+
+<!-- SCREEN: WELCOME -->
+<div class="screen active" id="screen-welcome">
+  <!-- 患者認識バナー（2回目以降に表示） -->
+  <div id="returning-banner" style="display:none" class="returning-banner">
+    <div class="returning-avatar" id="ret-avatar">?</div>
+    <div class="returning-info">
+      <div class="returning-name" id="ret-name">--</div>
+      <div class="returning-sub" id="ret-sub">前回の情報を引き継ぎます</div>
+    </div>
+    <button class="returning-change" onclick="clearPatientCache()">別の方</button>
+  </div>
+
+  <div class="welcome-card">
+    <div class="welcome-icon">🏥</div>
+    <div class="welcome-title" id="wlc-title">問診票</div>
+    <div class="welcome-clinic" id="wlc-clinic">さくら内科クリニック</div>
+    <div class="welcome-desc">
+      受付前に問診票へのご回答をお願いします。<br>
+      スマートフォンからそのまま入力できます。<br>アプリのインストールは不要です。
+    </div>
+  </div>
+  <div class="info-card">
+    <strong>📋 ご回答の流れ</strong><br>
+    ① お名前・生年月日の入力<br>
+    ② 問診項目へのご回答<br>
+    ③ 内容確認・送信<br><br>
+    入力内容は暗号化して安全に送信されます。
+  </div>
+  <button class="btn-primary" onclick="startForm()">問診票を開始する →</button>
+</div>
+
+<!-- SCREEN: PATIENT INFO -->
+<div class="screen" id="screen-patient">
+  <div class="section-card">
+    <div class="section-title">基本情報</div>
+    <div class="field">
+      <div class="field-label">お名前（漢字）<span class="required-badge">必須</span></div>
+      <input type="text" id="pt-name" placeholder="例：山田 太郎" autocomplete="name">
+      <div class="error-msg" id="err-name">お名前を入力してください</div>
+    </div>
+    <div class="field">
+      <div class="field-label">フリガナ<span class="required-badge">必須</span></div>
+      <input type="text" id="pt-kana" placeholder="例：ヤマダ タロウ">
+      <div class="error-msg" id="err-kana">フリガナを入力してください</div>
+    </div>
+    <div class="field">
+      <div class="field-label">生年月日<span class="required-badge">必須</span></div>
+      <input type="date" id="pt-dob">
+      <div class="error-msg" id="err-dob">生年月日を選択してください</div>
+    </div>
+    <div class="field">
+      <div class="field-label">電話番号<span class="required-badge">必須</span></div>
+      <input type="tel" id="pt-tel" placeholder="090-0000-0000" autocomplete="tel"
+        oninput="onPhoneInput(this.value)">
+      <div id="tel-lookup-msg" style="font-size:12px;color:#0D9488;margin-top:4px;display:none">
+        ⏳ 患者情報を照合中...
+      </div>
+      <div id="tel-found-msg" style="font-size:12px;color:#059669;margin-top:4px;display:none">
+        ✅ 過去の受診記録が見つかりました。情報を自動入力しました。
+      </div>
+      <div class="error-msg" id="err-tel">電話番号を入力してください</div>
+    </div>
+    <div class="field">
+      <div class="field-label">性別<span class="required-badge">必須</span></div>
+      <div class="yesno-wrap">
+        <button class="yesno-btn" id="sex-m" onclick="selectSex('男性')">男性</button>
+        <button class="yesno-btn" id="sex-f" onclick="selectSex('女性')">女性</button>
+      </div>
+      <div class="error-msg" id="err-sex">性別を選択してください</div>
+    </div>
+    <div class="field">
+      <div class="field-label">初診・再診<span class="required-badge">必須</span></div>
+      <select id="pt-visit">
+        <option value="">選択してください</option>
+        <option value="初診">初診（はじめての受診）</option>
+        <option value="再診">再診（以前に受診したことがある）</option>
+      </select>
+    </div>
+  </div>
+  <div class="bottom-nav">
+    <button class="bottom-back" onclick="goBack()">←</button>
+    <button class="bottom-next" onclick="submitPatientInfo()">次へ →</button>
+  </div>
+</div>
+
+<!-- SCREEN: QUESTION (dynamic) -->
+<div class="screen" id="screen-question">
+  <div id="question-container"></div>
+  <div class="bottom-nav">
+    <button class="bottom-back" onclick="goBack()">←</button>
+    <button class="bottom-next" id="q-next-btn" onclick="submitAnswer()">次へ →</button>
+  </div>
+</div>
+
+<!-- SCREEN: AI深掘り -->
+<div class="screen" id="screen-followup">
+  <div id="ai-followup-container"></div>
+  <div class="bottom-nav">
+    <button class="bottom-back" onclick="goBack()">←</button>
+    <button class="bottom-next" id="ai-next-btn" onclick="submitFollowup()">次へ →</button>
+  </div>
+</div>
+
+<!-- SCREEN: CONFIRM -->
+<div class="screen" id="screen-confirm">
+  <div class="section-card">
+    <div class="section-title">入力内容の確認</div>
+    <div id="confirm-summary"></div>
+  </div>
+  <div style="padding: 0 0 20px">
+    <button class="btn-primary" onclick="submitForm()">この内容で送信する</button>
+    <button class="btn-secondary" onclick="goBack()">修正する</button>
+  </div>
+  <div class="bottom-nav" style="display:none"></div>
+</div>
+
+<!-- SCREEN: COMPLETE -->
+<div class="screen" id="screen-complete">
+  <div class="complete-card">
+    <div class="complete-icon">✅</div>
+    <div class="complete-title">送信が完了しました</div>
+    <div class="complete-desc">
+      問診票へのご回答ありがとうございました。<br>
+      受付スタッフにお声がけいただくか、<br>お呼びするまでお待ちください。
+    </div>
+    <div class="complete-id" id="complete-id">受付番号: ---</div>
+  </div>
+  <div class="info-card">
+    <strong>次のステップ</strong><br>
+    受付窓口にて「問診票を送信しました」とお伝えください。診察室にご案内します。
+  </div>
+</div>
+
+<!-- LOADING -->
+<div class="loading-overlay" id="loading">
+  <div class="spinner"></div>
+  <div class="loading-text">送信しています...</div>
+</div>
+
+<script>
+// ===== FORM DATA =====
+// In production this is fetched from URL params: ?formId=F001&qr=QR001
+const FORM_DATA = {
+  clinic: 'さくら内科クリニック',
+  formName: '内科初診問診票',
+  formId: 'F001',
+  qrId: 'QR001',
+  questions: [
+    {
+      id: 'Q1', text: '本日の主な症状は何ですか？', type: 'checkbox', required: true,
+      options: ['発熱', '咳・鼻水', '腹痛', '頭痛', '倦怠感', 'めまい', '胸痛', 'その他'],
+      hint: '当てはまるものをすべて選択してください', category: '主訴・症状'
+    },
+    {
+      id: 'Q2', text: '症状はいつから始まりましたか？', type: 'date', required: true,
+      options: [], hint: '', category: '主訴・症状'
+    },
+    {
+      id: 'Q3', text: '現在服用中の薬はありますか？', type: 'yesno', required: true,
+      options: [], hint: '', category: '服薬情報'
+    },
+    {
+      id: 'Q4', text: '服用中の薬の名前を教えてください', type: 'text', required: false,
+      options: [], hint: 'お薬手帳をお持ちの場合は薬剤名をご記入ください',
+      category: '服薬情報', condition: { q: 'Q3', val: 'はい' }
+    },
+    {
+      id: 'Q5', text: '以下の既往歴がある場合は選択してください', type: 'checkbox', required: false,
+      options: ['高血圧', '糖尿病', '心疾患', '脳卒中', '喘息', '腎臓病', 'なし / 特になし'],
+      hint: '', category: '既往歴'
+    },
+    {
+      id: 'Q6', text: '薬・食物アレルギーはありますか？', type: 'yesno', required: true,
+      options: [], hint: '', category: 'アレルギー'
+    },
+    {
+      id: 'Q7', text: 'アレルギーの内容を教えてください', type: 'text', required: false,
+      options: [], hint: '例：ペニシリン系抗菌薬、卵、そば など',
+      category: 'アレルギー', condition: { q: 'Q6', val: 'はい' }
+    },
+    {
+      id: 'Q8', text: '現在の体調を全体的に評価してください', type: 'scale', required: false,
+      options: [], hint: '1 = とても辛い　10 = とても良い', category: 'その他'
+    },
+    {
+      id: 'Q9', text: '受診のきっかけや、医師に伝えたいことがあればご記入ください', type: 'text', required: false,
+      options: [], hint: '自由にご記入ください', category: 'その他'
+    }
+  ]
+};
+
+// ===== STATE =====
+const state = {
+  screen: 'welcome',
+  screenHistory: ['welcome'],
+  patientInfo: {},
+  answers: {},
+  currentQIndex: 0,
+  activeQuestions: [],
+  sex: ''
+};
+
+// ===== サーバーサイド患者照合（電話番号入力時） =====
+let phoneTimer = null;
+
+function onPhoneInput(val) {
+  clearTimeout(phoneTimer);
+  const digits = val.replace(/[-\s]/g, '');
+  if (digits.length < 10) return;  // 10桁未満は照合しない
+
+  const lookupMsg = document.getElementById('tel-lookup-msg');
+  const foundMsg  = document.getElementById('tel-found-msg');
+  lookupMsg.style.display = 'block';
+  foundMsg.style.display  = 'none';
+
+  // 500ms デバウンス
+  phoneTimer = setTimeout(async () => {
+    try {
+      const res = await fetch(`${SYNC_SERVER_URL}/api/patient/lookup`, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ phone: val }),
+        signal:  AbortSignal.timeout(3000)
+      });
+      const data = await res.json();
+      lookupMsg.style.display = 'none';
+
+      if (data.found && data.patient) {
+        const p = data.patient;
+        // 自動入力（未入力のフィールドのみ上書き）
+        const nameEl = document.getElementById('pt-name');
+        const kanaEl = document.getElementById('pt-kana');
+        const dobEl  = document.getElementById('pt-dob');
+        if (nameEl && !nameEl.value) { nameEl.value = p.name; nameEl.classList.add('autofilled'); }
+        if (kanaEl && !kanaEl.value) { kanaEl.value = p.kana; kanaEl.classList.add('autofilled'); }
+        if (dobEl  && !dobEl.value)  { dobEl.value  = p.dob;  dobEl.classList.add('autofilled'); }
+        if (p.sex && !state.sex) { selectSex(p.sex); }
+
+        // 受診区分を再診に設定
+        if (p.visitCount > 0) {
+          document.getElementById('pt-visit').value = '再診';
+        }
+
+        foundMsg.textContent = `✅ ${p.lastVisit} に受診された記録が見つかりました（計${p.visitCount}回）。情報を自動入力しました。`;
+        foundMsg.style.display = 'block';
+
+        // バナーも更新
+        const banner = document.getElementById('returning-banner');
+        const retName = document.getElementById('ret-name');
+        if (banner && p.name) {
+          document.getElementById('ret-avatar').textContent = p.name.charAt(0);
+          retName.textContent = p.name + ' 様';
+          document.getElementById('ret-sub').textContent =
+            `前回受診: ${p.lastVisit} ・ 計${p.visitCount}回のご来院`;
+          banner.style.display = 'flex';
+        }
+      }
+    } catch {
+      // サーバー未起動時はLocalStorageのキャッシュを使う（既に実装済み）
+      document.getElementById('tel-lookup-msg').style.display = 'none';
+    }
+  }, 500);
+}
+
+// ===== PATIENT CACHE (localStorage で患者情報を永続化) =====
+const PATIENT_CACHE_KEY = 'qrinic_patient_' + (new URLSearchParams(window.location.search).get('clinicId') || 'default');
+
+function savePatientCache(info) {
+  try {
+    localStorage.setItem(PATIENT_CACHE_KEY, JSON.stringify({
+      ...info,
+      savedAt: new Date().toISOString()
+    }));
+  } catch(e) {}
+}
+
+function loadPatientCache() {
+  try {
+    const raw = localStorage.getItem(PATIENT_CACHE_KEY);
+    if (!raw) return null;
+    const data = JSON.parse(raw);
+    // 1年以上前のデータは無効
+    if (new Date() - new Date(data.savedAt) > 365 * 86400000) {
+      localStorage.removeItem(PATIENT_CACHE_KEY);
+      return null;
+    }
+    return data;
+  } catch(e) { return null; }
+}
+
+function clearPatientCache() {
+  localStorage.removeItem(PATIENT_CACHE_KEY);
+  document.getElementById('returning-banner').style.display = 'none';
+  // フォームをクリア
+  ['pt-name','pt-kana','pt-tel'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.value = ''; el.classList.remove('autofilled'); }
+  });
+  document.getElementById('pt-dob').value = '';
+  document.getElementById('pt-visit').value = '';
+  state.sex = '';
+  document.getElementById('sex-m').classList.remove('selected');
+  document.getElementById('sex-f').classList.remove('selected');
+}
+
+function autofillPatientForm(cache) {
+  if (!cache) return;
+  const fields = { 'pt-name': cache.name, 'pt-kana': cache.kana,
+                   'pt-dob': cache.dob, 'pt-tel': cache.tel };
+  Object.entries(fields).forEach(([id, val]) => {
+    const el = document.getElementById(id);
+    if (el && val) { el.value = val; el.classList.add('autofilled'); }
+  });
+  if (cache.visit) document.getElementById('pt-visit').value = cache.visit;
+  if (cache.sex) {
+    state.sex = cache.sex;
+    document.getElementById('sex-m').classList.toggle('selected', cache.sex === '男性');
+    document.getElementById('sex-f').classList.toggle('selected', cache.sex === '女性');
+  }
+}
+
+// ===== INIT =====
+function init() {
+  const params = new URLSearchParams(window.location.search);
+  const formId  = params.get('formId') || FORM_DATA.formId;
+  const qrId    = params.get('qr')     || FORM_DATA.qrId;
+  const label   = params.get('label')  || '';
+
+  // URL からクリニック情報を上書き（本番APIから取得する場合はここを差し替え）
+  document.getElementById('hdr-clinic').textContent = FORM_DATA.clinic;
+  document.getElementById('hdr-form').textContent   = FORM_DATA.formName;
+  document.getElementById('wlc-title').textContent  = FORM_DATA.formName;
+  document.getElementById('wlc-clinic').textContent = FORM_DATA.clinic;
+
+  // ── 患者認識: LocalStorage から前回情報を読み込む ──
+  const cache = loadPatientCache();
+  if (cache && cache.name) {
+    const banner  = document.getElementById('returning-banner');
+    const avatar  = document.getElementById('ret-avatar');
+    const retName = document.getElementById('ret-name');
+    const retSub  = document.getElementById('ret-sub');
+
+    banner.style.display = 'flex';
+    avatar.textContent   = cache.name.charAt(0);
+    retName.textContent  = cache.name + ' 様';
+    retSub.textContent   = `前回: ${new Date(cache.savedAt).toLocaleDateString('ja-JP')} ・ 情報を引き継ぎます`;
+  }
+}
+
+// ===== NAVIGATION =====
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
+  state.screen = name;
+  window.scrollTo(0, 0);
+  updateProgress();
+}
+
+function goBack() {
+  state.screenHistory.pop();
+  const prev = state.screenHistory[state.screenHistory.length - 1];
+  if (!prev) return;
+
+  // AI深掘り画面のバック処理
+  if (state.screen === 'followup') {
+    if (followupIndex > 0) {
+      followupIndex--;
+      renderFollowup(pendingFollowups[followupIndex]);
+    } else {
+      // 深掘り最初の質問から戻る → 通常質問の最後へ
+      showScreen('question');
+    }
+    return;
+  }
+
+  if (prev === 'question') {
+    if (state.currentQIndex > 0) {
+      state.currentQIndex--;
+      while (state.currentQIndex > 0 && isSkipped(state.activeQuestions[state.currentQIndex])) {
+        state.currentQIndex--;
+      }
+      renderQuestion(state.activeQuestions[state.currentQIndex]);
+      showScreen('question');
+    } else {
+      showScreen('patient');
+    }
+  } else {
+    showScreen(prev);
+  }
+}
+
+function pushScreen(name) {
+  state.screenHistory.push(name);
+  showScreen(name);
+}
+
+// ===== PROGRESS =====
+function updateProgress() {
+  const wrap = document.getElementById('progress-wrap');
+  const step = document.getElementById('hdr-step');
+
+  if (state.screen === 'welcome' || state.screen === 'complete') {
+    wrap.style.display = 'none';
+    step.style.display = 'none';
+    return;
+  }
+
+  wrap.style.display = 'block';
+  step.style.display = 'flex';
+
+  const total = state.activeQuestions.length + 2; // +patient +confirm
+  let current = 0;
+
+  if (state.screen === 'patient') { current = 1; }
+  else if (state.screen === 'question') { current = 2 + state.currentQIndex; }
+  else if (state.screen === 'confirm') { current = total; }
+
+  const pct = Math.round((current / total) * 100);
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('prog-pct').textContent = pct + '%';
+
+  const aiLabel = pendingFollowups.length > 0
+    ? 'AI質問 ' + (followupIndex + 1) + '/' + pendingFollowups.length
+    : 'AI質問';
+  const labels = {
+    patient:  '基本情報',
+    question: '問診 ' + (state.currentQIndex + 1) + '/' + state.activeQuestions.length,
+    followup: aiLabel,
+    confirm:  '確認'
+  };
+  document.getElementById('prog-label').textContent = labels[state.screen] || '';
+  step.textContent = labels[state.screen] || '';
+}
+
+// ===== START =====
+function startForm() {
+  state.activeQuestions = FORM_DATA.questions;
+  state.currentQIndex   = 0;
+
+  // 患者キャッシュがあれば基本情報を自動入力
+  const cache = loadPatientCache();
+  if (cache && cache.name) {
+    autofillPatientForm(cache);
+  }
+
+  pushScreen('patient');
+}
+
+// ===== PATIENT INFO =====
+function selectSex(val) {
+  state.sex = val;
+  document.getElementById('sex-m').classList.toggle('selected', val === '男性');
+  document.getElementById('sex-f').classList.toggle('selected', val === '女性');
+  document.getElementById('sex-m').style.borderColor = val === '男性' ? '#10B981' : '';
+  document.getElementById('sex-f').style.borderColor = val === '女性' ? '#EF4444' : '';
+  document.getElementById('err-sex').classList.remove('show');
+}
+
+function submitPatientInfo() {
+  let valid = true;
+
+  const name = document.getElementById('pt-name').value.trim();
+  const kana = document.getElementById('pt-kana').value.trim();
+  const dob = document.getElementById('pt-dob').value;
+  const tel = document.getElementById('pt-tel').value.trim();
+  const visit = document.getElementById('pt-visit').value;
+
+  if (!name) { document.getElementById('err-name').classList.add('show'); valid = false; }
+  else document.getElementById('err-name').classList.remove('show');
+  if (!kana) { document.getElementById('err-kana').classList.add('show'); valid = false; }
+  else document.getElementById('err-kana').classList.remove('show');
+  if (!dob) { document.getElementById('err-dob').classList.add('show'); valid = false; }
+  else document.getElementById('err-dob').classList.remove('show');
+  if (!tel) { document.getElementById('err-tel').classList.add('show'); valid = false; }
+  else document.getElementById('err-tel').classList.remove('show');
+  if (!state.sex) { document.getElementById('err-sex').classList.add('show'); valid = false; }
+  else document.getElementById('err-sex').classList.remove('show');
+
+  if (!valid) { document.querySelector('.error-msg.show')?.scrollIntoView({ behavior: 'smooth', block: 'center' }); return; }
+
+  state.patientInfo = { name, kana, dob, tel, sex: state.sex, visit };
+
+  // 患者情報をLocalStorageに保存（次回自動入力のため）
+  savePatientCache(state.patientInfo);
+
+  // 基本情報画面に戻ったとき自動入力状態を視覚的に更新
+  autofillPatientForm(state.patientInfo);
+
+  goToNextQuestion();
+}
+
+// ===== QUESTIONS =====
+function isSkipped(q) {
+  if (!q.condition) return false;
+  const condAnswer = state.answers[q.condition.q];
+  if (Array.isArray(condAnswer)) return !condAnswer.includes(q.condition.val);
+  return condAnswer !== q.condition.val;
+}
+
+// ===== AI 深掘りエンジン =====
+// 症状回答に応じて追加質問を動的生成する
+const AI_FOLLOWUP_RULES = [
+  // 発熱があれば体温・期間を深掘り
+  {
+    trigger:  { qId: 'Q1', includes: '発熱' },
+    followups: [
+      { id: 'AI_fever_temp', text: '体温を教えてください', type: 'radio',
+        options: ['37.0〜37.4℃（微熱）','37.5〜37.9℃','38.0〜38.9℃','39℃以上'], required: true },
+      { id: 'AI_fever_days', text: '発熱が続いている日数は？', type: 'radio',
+        options: ['本日だけ','2〜3日','4〜7日','1週間以上'], required: true },
+      { id: 'AI_fever_chills', text: '悪寒（ぞくぞく感）はありますか？', type: 'yesno', required: false },
+    ]
+  },
+  // 咳があれば性状・痰を深掘り
+  {
+    trigger:  { qId: 'Q1', includes: '咳・鼻水' },
+    followups: [
+      { id: 'AI_cough_type', text: '咳の状態を教えてください', type: 'radio',
+        options: ['乾いた咳（コンコン）','湿った咳・痰が出る','夜間に強くなる','ほぼ一日中'], required: false },
+      { id: 'AI_cough_blood', text: '血が混じった痰はありますか？', type: 'yesno', required: true },
+    ]
+  },
+  // 腹痛があれば部位・性状を深掘り
+  {
+    trigger:  { qId: 'Q1', includes: '腹痛' },
+    followups: [
+      { id: 'AI_pain_area', text: '痛みの場所はどこですか？', type: 'radio',
+        options: ['みぞおち（上腹部）','へその周り（中腹部）','右下腹部','左下腹部','全体的に'], required: true },
+      { id: 'AI_pain_type', text: '痛みの性状は？', type: 'radio',
+        options: ['ズキズキ・波がある','持続的に痛い','食後に悪化する','空腹時に悪化する'], required: false },
+      { id: 'AI_nausea', text: '吐き気・嘔吐はありますか？', type: 'yesno', required: false },
+    ]
+  },
+  // 頭痛があれば性状・随伴症状を深掘り
+  {
+    trigger:  { qId: 'Q1', includes: '頭痛' },
+    followups: [
+      { id: 'AI_head_type', text: '頭痛の種類は？', type: 'radio',
+        options: ['ズキズキ・脈打つような','締め付けられるような','突然の激しい頭痛','慢性的な鈍痛'], required: true },
+      { id: 'AI_head_side', text: '頭痛の場所は？', type: 'radio',
+        options: ['頭全体','右側だけ','左側だけ','後頭部','目の奥'], required: false },
+      { id: 'AI_head_nausea', text: '吐き気・光過敏はありますか？', type: 'yesno', required: false },
+    ]
+  },
+  // 高血圧の既往があれば現在の服薬状況を深掘り
+  {
+    trigger:  { qId: 'Q5', includes: '高血圧' },
+    followups: [
+      { id: 'AI_bp_med', text: '降圧薬を現在も服用していますか？', type: 'yesno', required: true },
+      { id: 'AI_bp_measure', text: '自宅で血圧を測定していますか？', type: 'yesno', required: false },
+    ]
+  },
+  // 糖尿病の既往があれば
+  {
+    trigger:  { qId: 'Q5', includes: '糖尿病' },
+    followups: [
+      { id: 'AI_dm_med', text: '糖尿病の薬・インスリンを使用していますか？', type: 'yesno', required: true },
+      { id: 'AI_dm_last', text: '最後にHbA1cを測定したのはいつですか？', type: 'radio',
+        options: ['1ヶ月以内','3ヶ月以内','半年以内','1年以上前','不明'], required: false },
+    ]
+  },
+];
+
+// 発火する深掘り質問を収集
+function collectFollowups() {
+  const followups = [];
+  const seen = new Set();
+  AI_FOLLOWUP_RULES.forEach(rule => {
+    const { qId, includes } = rule.trigger;
+    const ans = state.answers[qId];
+    const triggered = Array.isArray(ans)
+      ? ans.some(a => a.includes(includes))
+      : (ans || '').includes(includes);
+    if (triggered) {
+      rule.followups.forEach(fq => {
+        if (!seen.has(fq.id)) { followups.push(fq); seen.add(fq.id); }
+      });
+    }
+  });
+  return followups;
+}
+
+// 深掘り回答の一時保存
+let pendingFollowups = [];
+let followupAnswers  = {};
+let followupIndex    = 0;
+
+function goToNextQuestion() {
+  let idx = state.currentQIndex;
+
+  while (idx < state.activeQuestions.length && isSkipped(state.activeQuestions[idx])) {
+    idx++;
+  }
+
+  if (idx >= state.activeQuestions.length) {
+    // ── 通常質問が終わったら深掘りフェーズへ ──
+    pendingFollowups = collectFollowups();
+    followupIndex    = 0;
+    followupAnswers  = {};
+
+    if (pendingFollowups.length > 0) {
+      renderFollowup(pendingFollowups[0]);
+      pushScreen('followup');
+    } else {
+      // 深掘りなし → 確認画面へ
+      pushScreen('confirm');
+      renderConfirm();
+    }
+    return;
+  }
+
+  state.currentQIndex = idx;
+  renderQuestion(state.activeQuestions[idx]);
+  if (state.screen !== 'question') pushScreen('question');
+  else updateProgress();
+}
+
+// ── 深掘り質問の描画 ──
+function renderFollowup(q) {
+  const container = document.getElementById('ai-followup-container');
+  const idx       = followupIndex + 1;
+  const total     = pendingFollowups.length;
+  const saved     = followupAnswers[q.id];
+
+  let inputHTML = '';
+  switch (q.type) {
+    case 'radio':
+      inputHTML = `<div class="ai-choices">`
+        + q.options.map(opt => {
+            const sel = saved === opt ? 'selected' : '';
+            return `<button class="ai-choice ${sel}" onclick="selectAIChoice(this,'${q.id}','${opt.replace(/'/g,"\'")}')">${opt}</button>`;
+          }).join('')
+        + `</div>`;
+      break;
+    case 'yesno':
+      inputHTML = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <button class="ai-choice ${saved==='はい'?'selected':''}" onclick="selectAIChoice(this,'${q.id}','はい')">✓ はい</button>
+        <button class="ai-choice ${saved==='いいえ'?'selected':''}" onclick="selectAIChoice(this,'${q.id}','いいえ')">✕ いいえ</button>
+      </div>`;
+      break;
+    default:
+      inputHTML = `<textarea id="ai-text-${q.id}" rows="3"
+        style="width:100%;padding:12px;border:1.5px solid #C7D2FE;border-radius:8px;font-size:14px;font-family:'Noto Sans JP',sans-serif;outline:none;resize:none"
+        placeholder="自由にご記入ください">${saved||''}</textarea>`;
+  }
+
+  container.innerHTML = `
+    <div class="ai-followup-card">
+      <div class="ai-tag">🤖 AI 追加質問 ${idx} / ${total}</div>
+      <div class="ai-question">${q.text}${q.required ? '<span style="color:#EF4444;margin-left:4px;font-size:12px">必須</span>' : ''}</div>
+      ${inputHTML}
+      ${!q.required ? `<button class="ai-skip" onclick="skipFollowup()">この質問をスキップ →</button>` : ''}
+    </div>
+    <div style="font-size:12px;color:#9CA3AF;text-align:center;margin-top:8px">
+      症状に関連した追加の確認事項です。医師が診察前に把握するために活用されます。
+    </div>`;
+
+  document.getElementById('ai-next-btn').textContent =
+    followupIndex >= pendingFollowups.length - 1 ? '確認画面へ →' : '次へ →';
+}
+
+function selectAIChoice(el, qId, val) {
+  el.closest('.ai-choices, div').querySelectorAll('.ai-choice')
+    .forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+  followupAnswers[qId] = val;
+}
+
+function skipFollowup() {
+  followupIndex++;
+  if (followupIndex >= pendingFollowups.length) {
+    // 深掘り完了 → 確認画面へ
+    mergeFollowupAnswers();
+    pushScreen('confirm');
+    renderConfirm();
+  } else {
+    renderFollowup(pendingFollowups[followupIndex]);
+  }
+}
+
+function submitFollowup() {
+  const q    = pendingFollowups[followupIndex];
+  const saved = followupAnswers[q.id];
+
+  // テキスト型の場合は textarea から取得
+  if (q.type === 'text') {
+    const ta = document.getElementById('ai-text-' + q.id);
+    if (ta) followupAnswers[q.id] = ta.value.trim();
+  }
+
+  // 必須チェック
+  if (q.required && !followupAnswers[q.id]) {
+    const card = document.querySelector('.ai-followup-card');
+    if (card) {
+      card.style.borderColor = '#EF4444';
+      card.style.background  = 'linear-gradient(135deg,#FEF2F2,#FFF5F5)';
+      setTimeout(() => {
+        card.style.borderColor = '#6366F1';
+        card.style.background  = 'linear-gradient(135deg,#EEF2FF,#F0F4FF)';
+      }, 1200);
+    }
+    return;
+  }
+
+  followupIndex++;
+  if (followupIndex >= pendingFollowups.length) {
+    mergeFollowupAnswers();
+    pushScreen('confirm');
+    renderConfirm();
+  } else {
+    renderFollowup(pendingFollowups[followupIndex]);
+  }
+}
+
+function mergeFollowupAnswers() {
+  // AI深掘り回答を通常の回答にマージ
+  Object.assign(state.answers, followupAnswers);
+}
+
+function renderQuestion(q) {
+  const container = document.getElementById('question-container');
+  const qNum = state.currentQIndex + 1;
+  const total = state.activeQuestions.filter(q2 => !isSkipped(q2)).length;
+
+  let inputHTML = '';
+  const savedAnswer = state.answers[q.id];
+
+  switch (q.type) {
+    case 'text':
+      inputHTML = `<textarea id="ans-input" placeholder="${q.hint || '回答を入力してください...'}" rows="4">${savedAnswer || ''}</textarea>`;
+      break;
+
+    case 'date':
+      inputHTML = `<input type="date" id="ans-input" value="${savedAnswer || ''}">`;
+      break;
+
+    case 'radio':
+      inputHTML = `<div class="choice-list">` + q.options.map(opt => {
+        const sel = savedAnswer === opt ? 'selected' : '';
+        return `<div class="choice-item ${sel}" onclick="selectRadio(this,'${opt.replace(/'/g,"\\'")}')">
+          <div class="choice-icon radio-icon">${sel ? '●' : ''}</div>
+          <span>${opt}</span>
+        </div>`;
+      }).join('') + `</div>`;
+      break;
+
+    case 'checkbox':
+      const savedArr = savedAnswer || [];
+      inputHTML = `<div class="choice-list">` + q.options.map(opt => {
+        const sel = savedArr.includes(opt) ? 'selected' : '';
+        return `<div class="choice-item ${sel}" onclick="toggleCheckbox(this,'${q.id}','${opt.replace(/'/g,"\\'")}')">
+          <div class="choice-icon check-icon">${sel ? '✓' : ''}</div>
+          <span>${opt}</span>
+        </div>`;
+      }).join('') + `</div>`;
+      break;
+
+    case 'yesno':
+      const isYes = savedAnswer === 'はい';
+      const isNo = savedAnswer === 'いいえ';
+      inputHTML = `<div class="yesno-wrap">
+        <button class="yesno-btn yes ${isYes ? 'selected' : ''}" onclick="selectYesNo('${q.id}','はい',this)">✓ はい</button>
+        <button class="yesno-btn no ${isNo ? 'selected' : ''}" onclick="selectYesNo('${q.id}','いいえ',this)">✕ いいえ</button>
+      </div>`;
+      break;
+
+    case 'scale':
+      const scaleVal = savedAnswer || 5;
+      inputHTML = `<div class="scale-wrap">
+        <div class="scale-labels"><span>😣 辛い (1)</span><span>(10) 良好 😊</span></div>
+        <input type="range" id="ans-input" min="1" max="10" value="${scaleVal}" oninput="updateScaleDisplay(this.value)">
+        <div class="scale-value" id="scale-disp">${scaleVal}</div>
+      </div>`;
+      break;
+  }
+
+  container.innerHTML = `
+    <div class="q-card">
+      <div class="q-number-tag">質問 ${qNum} / ${total}</div>
+      <div class="q-text">${q.text}${q.required ? '<span style="color:var(--danger);margin-left:4px">*</span>' : ''}</div>
+      ${q.hint ? `<div class="q-hint">${q.hint}</div>` : ''}
+      ${inputHTML}
+      <div class="error-msg" id="q-error">この項目は必須です</div>
+    </div>
+  `;
+
+  // Button label
+  const isLast = state.activeQuestions.filter((q2, i) => i > state.currentQIndex && !isSkipped(q2)).length === 0;
+  document.getElementById('q-next-btn').textContent = isLast ? '確認画面へ →' : '次へ →';
+}
+
+function selectRadio(el, val) {
+  document.querySelectorAll('.choice-item').forEach(i => {
+    i.classList.remove('selected');
+    i.querySelector('.choice-icon').textContent = '';
+  });
+  el.classList.add('selected');
+  el.querySelector('.choice-icon').textContent = '●';
+  const q = state.activeQuestions[state.currentQIndex];
+  state.answers[q.id] = val;
+}
+
+function toggleCheckbox(el, qId, val) {
+  if (!state.answers[qId]) state.answers[qId] = [];
+  const arr = state.answers[qId];
+  const idx = arr.indexOf(val);
+  if (idx > -1) {
+    arr.splice(idx, 1);
+    el.classList.remove('selected');
+    el.querySelector('.choice-icon').textContent = '';
+  } else {
+    arr.push(val);
+    el.classList.add('selected');
+    el.querySelector('.choice-icon').textContent = '✓';
+  }
+}
+
+function selectYesNo(qId, val, btn) {
+  btn.closest('.yesno-wrap').querySelectorAll('.yesno-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  state.answers[qId] = val;
+}
+
+function updateScaleDisplay(val) {
+  document.getElementById('scale-disp').textContent = val;
+}
+
+function submitAnswer() {
+  const q = state.activeQuestions[state.currentQIndex];
+  let answer = null;
+
+  switch (q.type) {
+    case 'text': case 'date':
+      answer = document.getElementById('ans-input')?.value?.trim() || '';
+      break;
+    case 'radio':
+      answer = state.answers[q.id] || '';
+      break;
+    case 'checkbox':
+      answer = state.answers[q.id] || [];
+      break;
+    case 'yesno':
+      answer = state.answers[q.id] || '';
+      break;
+    case 'scale':
+      answer = document.getElementById('ans-input')?.value || '5';
+      break;
+  }
+
+  if (q.required && (!answer || (Array.isArray(answer) && answer.length === 0))) {
+    document.getElementById('q-error').classList.add('show');
+    return;
+  }
+  document.getElementById('q-error').classList.remove('show');
+
+  if (answer !== null && answer !== '') state.answers[q.id] = answer;
+
+  state.currentQIndex++;
+  goToNextQuestion();
+}
+
+// ===== CONFIRM =====
+function renderConfirm() {
+  const summary = document.getElementById('confirm-summary');
+  const pinfo   = state.patientInfo;
+
+  const rows = [
+    { q: 'お名前',    a: pinfo.name + '（' + pinfo.kana + '）' },
+    { q: '生年月日',  a: pinfo.dob },
+    { q: '電話番号',  a: pinfo.tel },
+    { q: '性別',      a: pinfo.sex },
+    { q: '初診・再診', a: pinfo.visit },
+    // 通常の問診回答
+    ...state.activeQuestions
+      .filter(q => !isSkipped(q) && state.answers[q.id] !== undefined)
+      .map(q => ({
+        q: q.text,
+        a: Array.isArray(state.answers[q.id])
+          ? state.answers[q.id].join('、')
+          : state.answers[q.id],
+        isAI: false
+      })),
+    // AI深掘り回答（あれば）
+    ...pendingFollowups
+      .filter(fq => followupAnswers[fq.id])
+      .map(fq => ({
+        q:    '🤖 ' + fq.text,
+        a:    followupAnswers[fq.id],
+        isAI: true
+      }))
+  ];
+
+  summary.innerHTML = rows.map(r => `
+    <div class="summary-item" ${r.isAI ? 'style="background:#F5F3FF;border-radius:8px;padding:10px;margin:-2px 0"' : ''}>
+      <div class="summary-q" ${r.isAI ? 'style="color:#6366F1"' : ''}>${r.q}</div>
+      <div class="summary-a">${r.a || '（未回答）'}</div>
+    </div>
+  `).join('');
+}
+
+// ===== CONFIG =====
+// ① Qrinic Auto-Sync Server を使う場合（pdf_parser_server.py と同じMacで起動）
+const SYNC_SERVER_URL = 'http://localhost:5051';
+// ② Supabase を使う場合（Supabase Dashboard > Settings > API からコピー）
+const SUPABASE_URL     = 'https://YOUR_PROJECT.supabase.co';
+const SUPABASE_KEY     = 'YOUR_ANON_KEY';
+// どちらを使うか: 'server' or 'supabase'
+const SUBMIT_MODE      = 'server';
+
+// ===== SUBMIT =====
+async function submitForm() {
+  const loading = document.getElementById('loading');
+  loading.style.display = 'flex';
+
+  const payload = {
+    formId:         FORM_DATA.formId,
+    qrId:           FORM_DATA.qrId,
+    clinicId:       FORM_DATA.clinicId || 'clinic_001',
+    submittedAt:    new Date().toISOString(),
+    patientInfo:    state.patientInfo,
+    answers:        state.answers,          // 通常問診の回答
+    aiFollowups:    followupAnswers,         // AI深掘りの回答
+    isReturning:    !!loadPatientCache()    // 再来院フラグ
+  };
+
+  let receiptNum = 'R' + Date.now().toString().slice(-6);
+
+  try {
+    if (SUBMIT_MODE === 'supabase' && SUPABASE_URL !== 'https://YOUR_PROJECT.supabase.co') {
+      // ── Supabase REST API に直接送信 ──────────────────────────
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/submissions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type':  'application/json',
+          'apikey':         SUPABASE_KEY,
+          'Authorization': `Bearer ${SUPABASE_KEY}`,
+          'Prefer':         'return=representation'
+        },
+        body: JSON.stringify({
+          form_id:      payload.formId,
+          qr_id:        payload.qrId,
+          clinic_id:    payload.clinicId,
+          patient_name: payload.patientInfo.name,
+          patient_info: payload.patientInfo,
+          answers:      payload.answers,
+          submitted_at: payload.submittedAt
+        })
+      });
+      if (!res.ok) throw new Error(`Supabase error: ${res.status}`);
+      const data = await res.json();
+      if (data?.[0]?.id) receiptNum = 'R' + data[0].id.toString().slice(-6).toUpperCase();
+
+    } else if (SUBMIT_MODE === 'server') {
+      // ── Qrinic Auto-Sync Server に送信 ───────────────────────
+      const res = await fetch(`${SYNC_SERVER_URL}/api/submit`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (!res.ok) throw new Error(`Server error: ${res.status}`);
+      const data = await res.json();
+      if (data.receiptNumber) receiptNum = data.receiptNumber;
+
+    } else {
+      // ── オフラインモード（サーバー未設定時のフォールバック） ──
+      // LocalStorageに保存してあとでバックエンドに送れるよう溜めておく
+      const pending = JSON.parse(localStorage.getItem('qrinic_pending') || '[]');
+      pending.push({ ...payload, localId: receiptNum, savedAt: new Date().toISOString() });
+      localStorage.setItem('qrinic_pending', JSON.stringify(pending));
+      console.info('📦 オフライン保存:', receiptNum, '（サーバー接続後に送信されます）');
+    }
+
+  } catch (err) {
+    console.error('送信エラー:', err);
+    // エラーでも患者には完了画面を見せる（データはフォールバック保存）
+    const pending = JSON.parse(localStorage.getItem('qrinic_pending') || '[]');
+    pending.push({ ...payload, localId: receiptNum, error: err.message });
+    localStorage.setItem('qrinic_pending', JSON.stringify(pending));
+  }
+
+  loading.style.display = 'none';
+  document.getElementById('complete-id').textContent = '受付番号: ' + receiptNum;
+
+  // 再来院の場合は完了メッセージをカスタマイズ
+  const cache = loadPatientCache();
+  if (cache && cache.name && pendingFollowups.length > 0) {
+    document.querySelector('.complete-desc').innerHTML =
+      `問診票へのご回答ありがとうございました。<br>
+       <strong style="color:#0D9488">AI追加質問 ${pendingFollowups.length}件</strong>にもお答えいただきました。<br>
+       受付スタッフにお声がけいただくか、お呼びするまでお待ちください。`;
+  }
+
+  pushScreen('complete');
+  document.getElementById('progress-wrap').style.display = 'none';
+  document.getElementById('hdr-step').style.display      = 'none';
+
+  // 再送ペンディングがあれば試みる
+  _retrySendPending();
+
+  // 未送信データがあれば再送を試みる
+  _retrySendPending();
+}
+
+// ===== ペンディングデータの再送 =====
+async function _retrySendPending() {
+  const pending = JSON.parse(localStorage.getItem('qrinic_pending') || '[]');
+  if (!pending.length) return;
+  const remaining = [];
+  for (const item of pending) {
+    try {
+      const res = await fetch(`${SYNC_SERVER_URL}/api/submit`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(item)
+      });
+      if (!res.ok) throw new Error('retry failed');
+      console.info('✅ 再送成功:', item.localId);
+    } catch {
+      remaining.push(item); // まだ失敗→残す
+    }
+  }
+  localStorage.setItem('qrinic_pending', JSON.stringify(remaining));
+}
+
+// ===== INIT =====
+init();
+</script>
+</body>
+</html>
